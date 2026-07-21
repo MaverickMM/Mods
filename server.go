@@ -55,7 +55,9 @@ func main() {
 		targetOutputFile = filepath.Join(exeDir, targetOutputFile)
 	}
 
-	publicBaseURL := fmt.Sprintf("https://%s.github.io/%s/mods", cfg.GitHubUser, cfg.GitHubRepo)
+	// Dynamic folder detection so the URL always matches where the files are stored in Git
+	cleanDirName := strings.TrimPrefix(filepath.ToSlash(cfg.ServerModsDir), "./")
+	publicBaseURL := fmt.Sprintf("https://%s.github.io/%s/%s", cfg.GitHubUser, cfg.GitHubRepo, cleanDirName)
 
 	fmt.Println("===================================")
 	fmt.Println("   Mod Server Manifest Generator   ")
