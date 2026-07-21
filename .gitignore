@@ -1,0 +1,14 @@
+# Compiled binaries
+server
+*.exe
+*.exe.stackdump
+*.test
+*.out
+
+# Go build / module cache
+*.o
+*.a
+
+# OS metadata
+.DS_Store
+Thumbs.db
