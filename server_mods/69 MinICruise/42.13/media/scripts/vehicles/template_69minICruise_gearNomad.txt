@@ -1,0 +1,197 @@
+module Base
+{
+	model 69minICruiseGasCan0
+	{
+		mesh = vehicles/Vehicles_69Rotttenmin_Body|TIS_GasCan0,
+		texture = Vehicles/Items_GasCan1,
+		shader = damn_wheel_shader,
+		scale = 0.1,
+	}
+
+	model 69minICruiseGasCan1
+	{
+		mesh = vehicles/Vehicles_69Rotttenmin_Body|TIS_GasCan1,
+		texture = Vehicles/Items_GasCan1,
+		shader = damn_wheel_shader,
+		scale = 0.1,
+	}
+
+	model 69minICruiseGasCan2
+	{
+		mesh = vehicles/Vehicles_69Rotttenmin_Body|TIS_GasCan2,
+		texture = Vehicles/Items_GasCan2,
+		shader = damn_wheel_shader,
+		scale = 0.1,
+	}
+
+	model 69minICruiseGenerator
+	{
+		mesh = vehicles/Vehicles_69Rotttenmin_Body|TIS_Generator,
+		texture = Vehicles/Items_Generator1,
+		shader = damn_wheel_shader,
+		scale = 0.1,
+	}
+
+	template vehicle 69minICruiseNomadGear
+	{
+			part DAMNGasCanOne
+        	{
+				model gascan0
+				{
+                file = 69minICruiseGasCan0,
+				}
+
+				category = Other,
+				area = TruckBed,
+				specificItem = false,
+				itemType = Base.PetrolCan,
+				mechanicRequireKey = false,
+                durability = 5,
+
+				table install
+				{
+
+                	time = 350,
+                	skills = Mechanics:1,
+                	recipes = Intermediate Mechanics,
+                	test = Vehicles.InstallTest.Default,
+                	
+            	}
+
+            	table uninstall
+            	{
+
+					time = 250,
+					skills = Mechanics:1,
+					recipes = Intermediate Mechanics,
+		            test = Vehicles.UninstallTest.Default,
+					complete = Vehicles.UninstallComplete.Default,
+            	}
+
+            	lua
+            	{
+				create = DAMN.Create.Blank,
+				}
+			}
+
+			part DAMNGasCanTwo
+        	{
+				model gascan1
+				{
+                file = 69minICruiseGasCan1,
+				}
+
+				category = Other,
+				area = TruckBed,
+				specificItem = false,
+				itemType = Base.PetrolCan,
+				mechanicRequireKey = false,
+                durability = 5,
+
+				table install
+				{
+
+                	time = 350,
+                	skills = Mechanics:1,
+                	recipes = Intermediate Mechanics,
+                	test = Vehicles.InstallTest.Default,
+                	
+            	}
+
+            	table uninstall
+            	{
+
+					time = 250,
+					skills = Mechanics:1,
+					recipes = Intermediate Mechanics,
+		            test = Vehicles.UninstallTest.Default,
+					complete = Vehicles.UninstallComplete.Default,
+            	}
+
+            	lua
+            	{
+				create = DAMN.Create.Blank,
+				}
+			}
+
+			part DAMNGasCanThree
+        	{
+				model gascan2
+				{
+                file = 69minICruiseGasCan2,
+				}
+
+				category = Other,
+				area = TruckBed,
+				specificItem = false,
+				itemType = Base.PetrolCan,
+				mechanicRequireKey = false,
+                durability = 5,
+
+				table install
+				{
+
+                	time = 350,
+                	skills = Mechanics:1,
+                	recipes = Intermediate Mechanics,
+                	test = Vehicles.InstallTest.Default,
+                	
+            	}
+
+            	table uninstall
+            	{
+
+					time = 250,
+					skills = Mechanics:1,
+					recipes = Intermediate Mechanics,
+		            test = Vehicles.UninstallTest.Default,
+					complete = Vehicles.UninstallComplete.Default,
+            	}
+
+            	lua
+            	{
+				create = DAMN.Create.Blank,
+				}
+			}
+
+			part DAMNGenerator
+        	{
+				model GenX
+				{
+                file = 69minICruiseGenerator,
+				}
+
+				category = Other,
+				area = TruckBed,
+				specificItem = false,
+				itemType = Base.Generator;Base.Generator_Old;Base.Generator_Yellow;Base.Generator_Blue,
+				mechanicRequireKey = false,
+                durability = 5,
+
+				table install
+				{
+ 
+                	time = 650,
+                	skills = Mechanics:1,
+                	recipes = Intermediate Mechanics,
+                	test = Vehicles.InstallTest.Default,
+                	
+            	}
+
+            	table uninstall
+            	{
+ 
+					time = 550,
+					skills = Mechanics:1,
+					recipes = Intermediate Mechanics,
+		            test = Vehicles.UninstallTest.Default,
+					complete = Vehicles.UninstallComplete.Default,
+            	}
+
+            	lua
+            	{
+				create = DAMN.Create.Blank,
+				}
+			}
+	}	
+}
