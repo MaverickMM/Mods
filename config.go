@@ -9,10 +9,12 @@ import (
 )
 
 type ServerConfig struct {
-	GitHubUser    string `json:"github_user"`
-	GitHubRepo    string `json:"github_repo"`
-	ServerModsDir string `json:"server_mods_dir"`
-	OutputFile    string `json:"output_file"`
+	GitHubUser    string   `json:"github_user"`
+	GitHubRepo    string   `json:"github_repo"`
+	ServerModsDir string   `json:"server_mods_dir"`
+	OutputFile    string   `json:"output_file"`
+	AppID         string   `json:"app_id"`
+	WorkshopItems []string `json:"workshop_items"`
 }
 
 const (
@@ -21,6 +23,14 @@ const (
 	defaultModsDir = "./server_mods"
 	defaultOutput  = "./manifest.json"
 )
+
+func getExeDir() string {
+	exe, err := os.Executable()
+	if err != nil {
+		return "."
+	}
+	return filepath.Dir(exe)
+}
 
 func expandPath(path string) string {
 	if strings.HasPrefix(path, "~/") || path == "~" {
@@ -33,14 +43,6 @@ func expandPath(path string) string {
 		}
 	}
 	return path
-}
-
-func getExeDir() string {
-	exe, err := os.Executable()
-	if err != nil {
-		return "."
-	}
-	return filepath.Dir(exe)
 }
 
 func loadServerConfig(path string) ServerConfig {
