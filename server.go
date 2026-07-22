@@ -193,7 +193,7 @@ func installLinuxPackage(pkg string) error {
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin // Bind Stdin so users can type sudo password if prompted
+	cmd.Stdin = os.Stdin
 
 	return cmd.Run()
 }
@@ -226,7 +226,6 @@ func ensureGitInstalled() error {
 }
 
 func ensureGHInstalled() error {
-	// If running on Linux, skip checking or installing GitHub CLI entirely
 	if runtime.GOOS == "linux" {
 		return nil
 	}
@@ -252,7 +251,6 @@ func ensureGHInstalled() error {
 }
 
 func ensureGitHubRepo(repoDir, user, repo string) error {
-	// Initialize local git repo if it doesn't exist yet
 	gitDir := filepath.Join(repoDir, ".git")
 	if _, err := os.Stat(gitDir); os.IsNotExist(err) {
 		fmt.Println("Initializing local Git repository...")
@@ -265,10 +263,8 @@ func ensureGitHubRepo(repoDir, user, repo string) error {
 		_ = branchCmd.Run()
 	}
 
-	// Determine the remote URL (Prefers SSH if git is configured for it, else HTTPS)
 	remoteURL := fmt.Sprintf("https://github.com/%s/%s.git", user, repo)
 
-	// Check if 'origin' remote is set locally; if not, add it
 	remoteCheck := exec.Command("git", "remote", "get-url", "origin")
 	remoteCheck.Dir = repoDir
 	if err := remoteCheck.Run(); err != nil {
@@ -278,11 +274,7 @@ func ensureGitHubRepo(repoDir, user, repo string) error {
 		_ = addRemote.Run()
 	}
 
-	// -------------------------------------------------------------
-	// LINUX / MANUAL GIT PATH (No `gh` CLI required)
-	// -------------------------------------------------------------
 	if runtime.GOOS == "linux" {
-		// Test connection to the remote repo using native git
 		lsRemoteCmd := exec.Command("git", "ls-remote", "origin")
 		lsRemoteCmd.Dir = repoDir
 		if err := lsRemoteCmd.Run(); err != nil {
@@ -294,9 +286,6 @@ func ensureGitHubRepo(repoDir, user, repo string) error {
 		return nil
 	}
 
-	// -------------------------------------------------------------
-	// WINDOWS PATH (Uses `gh` CLI for browser login & repo creation)
-	// -------------------------------------------------------------
 	if err := ensureGHInstalled(); err != nil {
 		return err
 	}
@@ -338,7 +327,6 @@ func pushToGitHub(repoDir, user, repo string) error {
 		return fmt.Errorf("not a git repository (missing .git folder in %s)", repoDir)
 	}
 
-	// Set remote origin if not already added
 	remoteCheck := exec.Command("git", "remote", "get-url", "origin")
 	remoteCheck.Dir = repoDir
 	if err := remoteCheck.Run(); err != nil && user != defaultUser && repo != defaultRepo {
@@ -362,7 +350,6 @@ func pushToGitHub(repoDir, user, repo string) error {
 
 	commitMsg := fmt.Sprintf("Auto update %s", time.Now().Format("2006-01-02 15:04:05"))
 
-	// Detect current branch dynamically
 	branchCmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
 	branchCmd.Dir = repoDir
 	branchOut, err := branchCmd.Output()
