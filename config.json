@@ -1,6 +1,8 @@
 {
-  "github_user": "MaverickMM",
-  "github_repo": "Mods",
+  "github_user": "your-username",
+  "github_repo": "your-repo-name",
   "server_mods_dir": "./server_mods",
-  "output_file": "./manifest.json"
+  "output_file": "./manifest.json",
+  "app_id": "",
+  "workshop_items": null
 }
