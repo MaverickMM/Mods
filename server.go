@@ -6,11 +6,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
+	"time"
 )
 
 type Mod struct {
@@ -23,6 +26,17 @@ type Manifest struct {
 	AppID         string   `json:"app_id,omitempty"`
 	WorkshopItems []string `json:"workshop_items,omitempty"`
 	Mods          []Mod    `json:"mods"`
+}
+
+type collectionResponse struct {
+	Response struct {
+		CollectionDetails []struct {
+			Result   int `json:"result"`
+			Children []struct {
+				PublishedFileID string `json:"publishedfileid"`
+			} `json:"children"`
+		} `json:"collectiondetails"`
+	} `json:"response"`
 }
 
 func main() {
@@ -125,14 +139,56 @@ func main() {
 	}
 
 	fmt.Printf("Scanned %d custom file(s).\n", len(scannedMods))
-	if len(cfg.WorkshopItems) > 0 {
-		fmt.Printf("Loaded %d Workshop Item ID(s) for AppID %s.\n", len(cfg.WorkshopItems), cfg.AppID)
+
+	// 4. Resolve Workshop Collections & Individual Items
+	workshopSet := make(map[string]bool)
+
+	// Process individual workshop items from config
+	for _, raw := range cfg.WorkshopItems {
+		id := extractSteamID(raw)
+		if id != "" {
+			workshopSet[id] = true
+		}
 	}
 
-	// 4. Construct complete Manifest object
+	// Process collections and fetch items via Steam API
+	if len(cfg.WorkshopCollections) > 0 {
+		fmt.Printf("Resolving %d Workshop Collection(s)...\n", len(cfg.WorkshopCollections))
+		for _, rawCol := range cfg.WorkshopCollections {
+			colID := extractSteamID(rawCol)
+			if colID == "" {
+				continue
+			}
+
+			fmt.Printf(" 📚 Fetching items for Collection ID %s...\n", colID)
+			items, err := fetchCollectionItemIDs(colID)
+			if err != nil {
+				fmt.Printf(" ⚠️ Failed to resolve collection %s: %v\n", colID, err)
+				continue
+			}
+
+			for _, itemID := range items {
+				workshopSet[itemID] = true
+			}
+			fmt.Printf("   └ Extracted %d item(s) from collection %s\n", len(items), colID)
+		}
+	}
+
+	// Convert set to sorted slice
+	var resolvedWorkshopItems []string
+	for itemID := range workshopSet {
+		resolvedWorkshopItems = append(resolvedWorkshopItems, itemID)
+	}
+	sort.Strings(resolvedWorkshopItems)
+
+	if len(resolvedWorkshopItems) > 0 {
+		fmt.Printf("Total Workshop Item ID(s) compiled for AppID %s: %d\n", cfg.AppID, len(resolvedWorkshopItems))
+	}
+
+	// 5. Construct complete Manifest object
 	manifest := Manifest{
 		AppID:         cfg.AppID,
-		WorkshopItems: cfg.WorkshopItems,
+		WorkshopItems: resolvedWorkshopItems,
 		Mods:          scannedMods,
 	}
 
@@ -159,7 +215,7 @@ func main() {
 
 	fmt.Printf("Generated %s successfully.\n", filepath.Base(targetOutputFile))
 
-	// 5. Upload to GitHub
+	// 6. Upload to GitHub
 	fmt.Println("Uploading updates to GitHub...")
 	if err := pushToGitHub(exeDir, cfg.GitHubUser, cfg.GitHubRepo); err != nil {
 		fmt.Printf("⚠️ Git sync skipped/failed: %v\n", err)
@@ -182,4 +238,78 @@ func getHash(path string) (string, error) {
 	}
 
 	return hex.EncodeToString(h.Sum(nil)), nil
+}
+
+// Helper: Extract numeric ID from direct string or Steam URL
+func extractSteamID(raw string) string {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return ""
+	}
+
+	if matched, _ := regexp.MatchString(`^\d+$`, raw); matched {
+		return raw
+	}
+
+	if u, err := url.Parse(raw); err == nil {
+		if id := u.Query().Get("id"); id != "" {
+			return id
+		}
+	}
+
+	re := regexp.MustCompile(`id=(\d+)`)
+	matches := re.FindStringSubmatch(raw)
+	if len(matches) > 1 {
+		return matches[1]
+	}
+
+	return ""
+}
+
+// Helper: Query Steam Web API for items inside a collection
+func fetchCollectionItemIDs(collectionID string) ([]string, error) {
+	apiURL := "https://api.steampowered.com/ISteamRemoteStorage/GetCollectionDetails/v1/"
+
+	formData := url.Values{}
+	formData.Set("collectioncount", "1")
+	formData.Set("publishedfileids[0]", collectionID)
+
+	client := &http.Client{Timeout: 15 * time.Second}
+	resp, err := client.PostForm(apiURL, formData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query Steam API: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("steam API returned status %s", resp.Status)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	var parsed collectionResponse
+	if err := json.Unmarshal(body, &parsed); err != nil {
+		return nil, fmt.Errorf("failed to parse JSON response: %w", err)
+	}
+
+	if len(parsed.Response.CollectionDetails) == 0 {
+		return nil, fmt.Errorf("collection ID %s not found", collectionID)
+	}
+
+	details := parsed.Response.CollectionDetails[0]
+	if details.Result != 1 {
+		return nil, fmt.Errorf("steam API error code %d (check if collection is public)", details.Result)
+	}
+
+	var itemIDs []string
+	for _, child := range details.Children {
+		if child.PublishedFileID != "" {
+			itemIDs = append(itemIDs, child.PublishedFileID)
+		}
+	}
+
+	return itemIDs, nil
 }

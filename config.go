@@ -9,12 +9,13 @@ import (
 )
 
 type ServerConfig struct {
-	GitHubUser    string   `json:"github_user"`
-	GitHubRepo    string   `json:"github_repo"`
-	ServerModsDir string   `json:"server_mods_dir"`
-	OutputFile    string   `json:"output_file"`
-	AppID         string   `json:"app_id"`
-	WorkshopItems []string `json:"workshop_items"`
+	GitHubUser          string   `json:"github_user"`
+	GitHubRepo          string   `json:"github_repo"`
+	ServerModsDir       string   `json:"server_mods_dir"`
+	OutputFile          string   `json:"output_file"`
+	AppID               string   `json:"app_id"`
+	WorkshopItems       []string `json:"workshop_items"`
+	WorkshopCollections []string `json:"workshop_collections"`
 }
 
 const (
@@ -51,10 +52,12 @@ func loadServerConfig(path string) ServerConfig {
 	f, err := os.Open(path)
 	if err != nil {
 		cfg = ServerConfig{
-			GitHubUser:    defaultUser,
-			GitHubRepo:    defaultRepo,
-			ServerModsDir: defaultModsDir,
-			OutputFile:    defaultOutput,
+			GitHubUser:          defaultUser,
+			GitHubRepo:          defaultRepo,
+			ServerModsDir:       defaultModsDir,
+			OutputFile:          defaultOutput,
+			WorkshopItems:       []string{},
+			WorkshopCollections: []string{},
 		}
 		saveServerConfig(path, cfg)
 		return cfg
@@ -64,10 +67,12 @@ func loadServerConfig(path string) ServerConfig {
 	if err := json.NewDecoder(f).Decode(&cfg); err != nil {
 		fmt.Println("⚠️ Warning: Invalid config.json, using defaults.")
 		cfg = ServerConfig{
-			GitHubUser:    defaultUser,
-			GitHubRepo:    defaultRepo,
-			ServerModsDir: defaultModsDir,
-			OutputFile:    defaultOutput,
+			GitHubUser:          defaultUser,
+			GitHubRepo:          defaultRepo,
+			ServerModsDir:       defaultModsDir,
+			OutputFile:          defaultOutput,
+			WorkshopItems:       []string{},
+			WorkshopCollections: []string{},
 		}
 		return cfg
 	}
@@ -87,6 +92,14 @@ func loadServerConfig(path string) ServerConfig {
 	}
 	if cfg.OutputFile == "" {
 		cfg.OutputFile = defaultOutput
+		updated = true
+	}
+	if cfg.WorkshopItems == nil {
+		cfg.WorkshopItems = []string{}
+		updated = true
+	}
+	if cfg.WorkshopCollections == nil {
+		cfg.WorkshopCollections = []string{}
 		updated = true
 	}
 

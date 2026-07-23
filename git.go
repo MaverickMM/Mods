@@ -16,36 +16,35 @@ func commandExists(cmd string) bool {
 }
 
 func installLinuxPackage(pkg string) error {
-	var cmd *exec.Cmd
+	runCmd := func(args ...string) error {
+		c := exec.Command("sudo", args...)
+		c.Stdout = os.Stdout
+		c.Stderr = os.Stderr
+		c.Stdin = os.Stdin
+		return c.Run()
+	}
 
 	switch {
 	case commandExists("apt-get"):
 		fmt.Printf("Installing %s via apt...\n", pkg)
-		cmd = exec.Command("sudo", "apt-get", "update")
-		_ = cmd.Run()
-		cmd = exec.Command("sudo", "apt-get", "install", "-y", pkg)
+		_ = runCmd("apt-get", "update")
+		return runCmd("apt-get", "install", "-y", pkg)
 
 	case commandExists("dnf"):
 		fmt.Printf("Installing %s via dnf...\n", pkg)
-		cmd = exec.Command("sudo", "dnf", "install", "-y", pkg)
+		return runCmd("dnf", "install", "-y", pkg)
 
 	case commandExists("pacman"):
 		fmt.Printf("Installing %s via pacman...\n", pkg)
-		cmd = exec.Command("sudo", "pacman", "-S", "--noconfirm", pkg)
+		return runCmd("pacman", "-S", "--noconfirm", pkg)
 
 	case commandExists("zypper"):
 		fmt.Printf("Installing %s via zypper...\n", pkg)
-		cmd = exec.Command("sudo", "zypper", "install", "-y", pkg)
+		return runCmd("zypper", "install", "-y", pkg)
 
 	default:
 		return fmt.Errorf("no supported package manager found (apt, dnf, pacman, zypper). Please install %s manually", pkg)
 	}
-
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-
-	return cmd.Run()
 }
 
 func ensureGitInstalled() error {
@@ -100,6 +99,25 @@ func ensureGHInstalled() error {
 	return fmt.Errorf("GitHub CLI (gh) is required on this OS")
 }
 
+// Ensures local git identity exists so 'git commit' never fails on fresh installs
+func ensureGitIdentity(repoDir string) {
+	nameCheck := exec.Command("git", "config", "user.name")
+	nameCheck.Dir = repoDir
+	if err := nameCheck.Run(); err != nil {
+		setName := exec.Command("git", "config", "user.name", "Mave Synchronizer")
+		setName.Dir = repoDir
+		_ = setName.Run()
+	}
+
+	emailCheck := exec.Command("git", "config", "user.email")
+	emailCheck.Dir = repoDir
+	if err := emailCheck.Run(); err != nil {
+		setEmail := exec.Command("git", "config", "user.email", "mave-bot@users.noreply.github.com")
+		setEmail.Dir = repoDir
+		_ = setEmail.Run()
+	}
+}
+
 func ensureGitHubRepo(repoDir, user, repo string) error {
 	gitDir := filepath.Join(repoDir, ".git")
 	if _, err := os.Stat(gitDir); os.IsNotExist(err) {
@@ -112,6 +130,8 @@ func ensureGitHubRepo(repoDir, user, repo string) error {
 		branchCmd.Dir = repoDir
 		_ = branchCmd.Run()
 	}
+
+	ensureGitIdentity(repoDir)
 
 	remoteURL := fmt.Sprintf("https://github.com/%s/%s.git", user, repo)
 
@@ -176,6 +196,8 @@ func pushToGitHub(repoDir, user, repo string) error {
 	if _, err := os.Stat(gitDir); os.IsNotExist(err) {
 		return fmt.Errorf("not a git repository (missing .git folder in %s)", repoDir)
 	}
+
+	ensureGitIdentity(repoDir)
 
 	remoteCheck := exec.Command("git", "remote", "get-url", "origin")
 	remoteCheck.Dir = repoDir
