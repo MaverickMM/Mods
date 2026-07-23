@@ -114,11 +114,5 @@
     "3765231579",
     "3766853734"
   ],
-  "mods": [
-    {
-      "name": "Huiata/Geuu.txt",
-      "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "url": "https://MaverickMM.github.io/Mods/server_mods/Huiata/Geuu.txt"
-    }
-  ]
+  "mods": null
 }
