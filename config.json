@@ -5,7 +5,7 @@
   "output_file": "./manifest.json",
   "app_id": "108600",
   "workshop_items": [
-    "3414634809"
+    null
   ],
-  "workshop_collections": []
+  "workshop_collections": ["3414634809"]
 }
