@@ -380,7 +380,7 @@ func fetchCollectionItemIDs(collectionID string) ([]string, error) {
 func ensureGitIgnore(repoDir string) {
 	ignorePath := filepath.Join(repoDir, ".gitignore")
 
-	// Strict whitelist setup
+	// Strict rules: block Go source files, binaries, and local configs explicitly
 	content := `# Ignore Go source code & binaries explicitly
 *.go
 go.mod

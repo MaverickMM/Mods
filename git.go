@@ -155,7 +155,12 @@ func pushToGitHub(repoDir, user, repo string) error {
 		_ = os.RemoveAll(rebaseApply)
 	}
 
-	// Stage ALL changes including file DELETIONS
+	// 1. Force untrack source files, binaries, and local configs from Git's index
+	untrackCmd := exec.Command("git", "rm", "--cached", "-f", "config.go", "git.go", "server.go", "go.mod", "go.sum", "config.json", "server_sync", "mave-sync-linux")
+	untrackCmd.Dir = repoDir
+	_ = untrackCmd.Run()
+
+	// 2. Stage ALL remaining changes (manifest.json, server_mods, and deletions)
 	addCmd := exec.Command("git", "add", "-A")
 	addCmd.Dir = repoDir
 	if err := addCmd.Run(); err != nil {
@@ -187,7 +192,7 @@ func pushToGitHub(repoDir, user, repo string) error {
 		}
 	}
 
-	// Prefer local changes automatically if conflicts occur during sync
+	// 3. Commit local changes, pull remote changes with rebase, and push
 	commands := [][]string{
 		{"git", "commit", "-m", commitMsg},
 		{"git", "pull", "--rebase", "--autostash", "-X", "ours", "origin", currentBranch},
