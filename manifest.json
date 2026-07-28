@@ -5,6 +5,11 @@
   ],
   "mods": [
     {
+      "name": "Hiaya/heheh.txt",
+      "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "url": "https://MaverickMM.github.io/Mods/server_mods/Hiaya/heheh.txt"
+    },
+    {
       "name": "s.txt",
       "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "url": "https://MaverickMM.github.io/Mods/server_mods/s.txt"
