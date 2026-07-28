@@ -1,5 +1,7 @@
 {
   "app_id": "108600",
+  "extract_mods_dir": true,
+  "target_subfolder": "mods",
   "workshop_items": [
     "3414634809"
   ],
