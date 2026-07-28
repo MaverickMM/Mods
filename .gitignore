@@ -1,13 +1,17 @@
-# Generated Files & Config
-config.json
-*.tmp
-*.log
-
-# Binaries & Build Folders
+# Ignore Go source code & binaries explicitly
+*.go
+go.mod
+go.sum
 server_sync
 mave-sync-linux
+config.json
 bin/
 
-# System Files
-.DS_Store
-Thumbs.db
+# Catch-all: ignore everything else in root
+/*
+
+# Whitelist allowed repository assets
+!/manifest.json
+!.gitignore
+!/server_mods/
+!/server_mods/**

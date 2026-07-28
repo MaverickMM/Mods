@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -381,10 +380,24 @@ func fetchCollectionItemIDs(collectionID string) ([]string, error) {
 func ensureGitIgnore(repoDir string) {
 	ignorePath := filepath.Join(repoDir, ".gitignore")
 
-	// Strict ignore rules: ignore everything except manifest.json, server_mods, and .gitignore
-	content := "# 1. Ignore everything by default\n/*\n\n# 2. Whitelist required files\n!/manifest.json\n!.gitignore\n\n# 3. Whitelist server_mods and all contents\n!/server_mods/\n!/server_mods/**\n"
-	_ = os.WriteFile(ignorePath, []byte(content), 0644)
+	// Strict whitelist setup
+	content := `# Ignore Go source code & binaries explicitly
+*.go
+go.mod
+go.sum
+server_sync
+mave-sync-linux
+config.json
+bin/
 
-	// Extra safety: force-remove .go source files from git index if staged
-	_ = exec.Command("git", "rm", "--cached", "config.go", "git.go", "server.go", "go.mod", "go.sum").Run()
+# Catch-all: ignore everything else in root
+/*
+
+# Whitelist allowed repository assets
+!/manifest.json
+!.gitignore
+!/server_mods/
+!/server_mods/**
+`
+	_ = os.WriteFile(ignorePath, []byte(content), 0644)
 }
