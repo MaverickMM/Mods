@@ -9,12 +9,13 @@ import (
 )
 
 type ServerConfig struct {
-	GitHubUser    string   `json:"github_user"`
-	GitHubRepo    string   `json:"github_repo"`
-	ServerModsDir string   `json:"server_mods_dir"`
-	OutputFile    string   `json:"output_file"`
-	AppID         string   `json:"app_id"`
-	WorkshopItems []string `json:"workshop_items"`
+	GitHubUser          string   `json:"github_user"`
+	GitHubRepo          string   `json:"github_repo"`
+	ServerModsDir       string   `json:"server_mods_dir"`
+	OutputFile          string   `json:"output_file"`
+	AppID               string   `json:"app_id"`
+	WorkshopItems       []string `json:"workshop_items"`
+	WorkshopCollections []string `json:"workshop_collections"`
 }
 
 const (

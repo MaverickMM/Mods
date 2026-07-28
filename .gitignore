@@ -1,0 +1,13 @@
+# Generated Files & Config
+config.json
+*.tmp
+*.log
+
+# Binaries & Build Folders
+server_sync
+mave-sync-linux
+bin/
+
+# System Files
+.DS_Store
+Thumbs.db

@@ -174,16 +174,30 @@ func ensureGitHubRepo(repoDir, user, repo string) error {
 func pushToGitHub(repoDir, user, repo string) error {
 	gitDir := filepath.Join(repoDir, ".git")
 	if _, err := os.Stat(gitDir); os.IsNotExist(err) {
-		return fmt.Errorf("not a git repository (missing .git folder in %s)", repoDir)
+		if err := ensureGitHubRepo(repoDir, user, repo); err != nil {
+			return err
+		}
 	}
 
-	remoteCheck := exec.Command("git", "remote", "get-url", "origin")
-	remoteCheck.Dir = repoDir
-	if err := remoteCheck.Run(); err != nil && user != defaultUser && repo != defaultRepo {
-		remoteURL := fmt.Sprintf("https://github.com/%s/%s.git", user, repo)
-		addRemote := exec.Command("git", "remote", "add", "origin", remoteURL)
-		addRemote.Dir = repoDir
-		_ = addRemote.Run()
+	ensureGitIdentity(repoDir)
+
+	// Clean up any interrupted rebase states
+	rebaseFolder := filepath.Join(gitDir, "rebase-merge")
+	rebaseApply := filepath.Join(gitDir, "rebase-apply")
+	if _, err := os.Stat(rebaseFolder); err == nil {
+		_ = exec.Command("git", "rebase", "--abort").Run()
+		_ = os.RemoveAll(rebaseFolder)
+	}
+	if _, err := os.Stat(rebaseApply); err == nil {
+		_ = exec.Command("git", "rebase", "--abort").Run()
+		_ = os.RemoveAll(rebaseApply)
+	}
+
+	// Stage ALL changes including file DELETIONS
+	addCmd := exec.Command("git", "add", "-A")
+	addCmd.Dir = repoDir
+	if err := addCmd.Run(); err != nil {
+		return fmt.Errorf("failed staging files: %v", err)
 	}
 
 	statusCmd := exec.Command("git", "status", "--porcelain")
@@ -211,15 +225,17 @@ func pushToGitHub(repoDir, user, repo string) error {
 		}
 	}
 
+	// Prefer local changes automatically if conflicts occur during sync
 	commands := [][]string{
-		{"git", "add", "."},
 		{"git", "commit", "-m", commitMsg},
+		{"git", "pull", "--rebase", "--autostash", "-X", "ours", "origin", currentBranch},
 		{"git", "push", "-u", "origin", currentBranch},
 	}
 
 	for _, cmdArgs := range commands {
 		cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
 		cmd.Dir = repoDir
+		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 
@@ -229,4 +245,22 @@ func pushToGitHub(repoDir, user, repo string) error {
 	}
 
 	return nil
+}
+
+func ensureGitIdentity(repoDir string) {
+	nameCheck := exec.Command("git", "config", "user.name")
+	nameCheck.Dir = repoDir
+	if err := nameCheck.Run(); err != nil {
+		setName := exec.Command("git", "config", "user.name", "Mave Synchronizer")
+		setName.Dir = repoDir
+		_ = setName.Run()
+	}
+
+	emailCheck := exec.Command("git", "config", "user.email")
+	emailCheck.Dir = repoDir
+	if err := emailCheck.Run(); err != nil {
+		setEmail := exec.Command("git", "config", "user.email", "mave-bot@users.noreply.github.com")
+		setEmail.Dir = repoDir
+		_ = setEmail.Run()
+	}
 }
